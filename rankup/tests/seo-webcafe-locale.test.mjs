@@ -12,10 +12,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const wc = await import(path.join(here, '../scripts/seo-webcafe.mjs'));
+const wc = await import(pathToFileURL(path.join(here, '../scripts/seo-webcafe.mjs')).href);
 
 test('TOOLS.kd.query：gl/hl 默认 us/en', () => {
   const q = wc.TOOLS.kd.query({ keyword: 'clipboard history' });

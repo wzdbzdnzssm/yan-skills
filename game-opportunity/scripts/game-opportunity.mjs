@@ -12,6 +12,7 @@
  * - 修复：缺指标缓存曾被复用为已查，未测趋势/竞争字段曾因形状完整而通过验收。
  */
 
+import { nodeCli } from '../../backlink/scripts/lib-node-cli.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -191,7 +192,10 @@ function mergeMissing(base, incoming) {
 
 function runProcess(command, argv, cwd) {
   return new Promise((resolve) => {
-    const child = spawn(command, argv, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+    let resolved;
+    try { resolved = nodeCli(command, argv, { cwd }); }
+    catch (error) { resolve({ ok: false, error: error.message, stdout: '', stderr: '' }); return; }
+    const child = spawn(resolved.command, resolved.args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '', stderr = '';
     child.stdout.on('data', (c) => { stdout += c; });
     child.stderr.on('data', (c) => { stderr += c; });
@@ -331,14 +335,14 @@ async function socialRadar(o) {
   for (const [source, command, argv] of specs) {
     if (o.source && o.source !== source) continue;
     const r = await runProcess(command, argv, o.root);
-    if (!r.ok) { const error = `${source}: ${r.error}`; errors.push(error); sources.push({ source, kind: 'social-24h', status: 'failed', count: 0, error }); continue; }
+    if (!r.ok) { const error = `${source}: ${r.error}`; errors.push(error); sources.push({ source, kind: 'social-24h', status: 'failed', count: null, error }); continue; }
     try {
       const items = parseSocialRows(source, r.stdout);
       rows.push(...items);
       sources.push({ source, kind: 'social-24h', status: 'collected', count: items.length });
     } catch (e) {
       const error = `${source}: 输出解析失败 ${e.message}`;
-      errors.push(error); sources.push({ source, kind: 'social-24h', status: 'failed', count: 0, error });
+      errors.push(error); sources.push({ source, kind: 'social-24h', status: 'failed', count: null, error });
     }
   }
   return { sources, candidates: mergeCampaigns(rows), errors };
@@ -384,6 +388,10 @@ function mergeRadarReport(previous, current, date) {
   };
 }
 
+function newTitleArgs(source, limit) {
+  return ['--source', source, '--count', String(limit), '--json', ...(source === 'poki' ? ['--tile-list', 'basic-game'] : [])];
+}
+
 async function radar(o) {
   const f = files(o);
   if (o.dryRun) return { ok: true, dryRun: true, sources: ['steam', 'itch', 'poki', ...(o.noSocial ? [] : ['reddit', 'youtube', 'x'])], file: f.radar };
@@ -395,11 +403,11 @@ async function radar(o) {
     const stateFile = path.join(o.radarState, `${source}.json`);
     const previous = readJson(stateFile, { seenKeys: [] });
     const seen = new Set(previous.seenKeys ?? []);
-    const r = await runNode(NEW_TITLES, ['--source', source, '--count', String(o.limit), '--json'], o.root);
-    if (!r.ok) { errors.push(`${source}: ${r.error}`); sources.push({ source, status: 'failed', count: 0, added: [], error: r.error }); continue; }
+    const r = await runNode(NEW_TITLES, newTitleArgs(source, o.limit), o.root);
+    if (!r.ok) { errors.push(`${source}: ${r.error}`); sources.push({ source, status: 'failed', count: null, added: [], error: r.error }); continue; }
     let items;
     try { items = JSON.parse(r.stdout); }
-    catch (e) { errors.push(`${source}: 输出解析失败 ${e.message}`); sources.push({ source, status: 'failed', count: 0, added: [], error: e.message }); continue; }
+    catch (e) { errors.push(`${source}: 输出解析失败 ${e.message}`); sources.push({ source, status: 'failed', count: null, added: [], error: e.message }); continue; }
     const added = previous.seenKeys?.length ? items.filter((item) => !itemKeys(item).some((key) => seen.has(key))) : [];
     const nextKeys = uniq([...seen, ...items.flatMap(itemKeys)]);
     writeJson(stateFile, { source, updatedAt: new Date().toISOString(), seenKeys: nextKeys, items });
@@ -1338,6 +1346,7 @@ async function decisionChecklist(o) {
 }
 
 function selfTest() {
+  if (newTitleArgs('poki', 15).slice(-2).join('|') !== '--tile-list|basic-game' || newTitleArgs('steam', 15).includes('--tile-list')) throw new Error('Poki 新游榜参数错误');
   if (demandKeywords({ keywords: [{ keyword: 'queens puzzle hints' }], names: ['Queens explained hints', 'techniques'] }).join('|') !== 'queens puzzle hints') {
     throw new Error('显式查询词不能被页面 slug 或内部实体名扩充');
   }

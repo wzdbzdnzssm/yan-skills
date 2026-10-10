@@ -1,3 +1,5 @@
+import { nodeCli } from './lib-node-cli.mjs';
+import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { appendFileSync, mkdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -163,7 +165,7 @@ export function showHelpIfRequested(flags, importMetaUrl) {
   if (!flags.help && !flags.h) return;
   let text = '';
   try {
-    const path = new URL(importMetaUrl).pathname;
+    const path = fileURLToPath(importMetaUrl);
     const src = readFileSync(path, 'utf8');
     const m = src.match(/\/\*\*([\s\S]*?)\*\//);
     if (m) text = m[1].split('\n').map((l) => l.replace(/^\s*\* ?/, '')).join('\n').trim();
@@ -265,7 +267,8 @@ function meaningfulStderr(stderr) {
 
 export async function run(command, args, options = {}) {
   return await new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const resolved = nodeCli(command, args, { cwd: options.cwd, env: { ...process.env, ...options.env } });
+    const child = spawn(resolved.command, resolved.args, {
       cwd: options.cwd,
       env: { ...process.env, ...options.env },
       stdio: ['ignore', 'pipe', 'pipe'],

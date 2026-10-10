@@ -73,6 +73,7 @@
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { nodeCli } from '../../../backlink/scripts/lib-node-cli.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import {
@@ -296,7 +297,7 @@ async function sourceSteam(o) {
 
 function normDate(s) {
   if (!s) return null;
-  const d = new Date(s);
+  const d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(s) ? `${s}T00:00:00Z` : `${s} UTC`);
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 }
 
@@ -419,7 +420,10 @@ async function sourceItch(o) {
 
   // itch 的公开 JSON 偶发按请求 UA 限流；真实浏览器能读取同一份公开列表。
   const session = sessionName('demand-itch');
-  const run = async (args) => (await execFileP('opencli', args, { maxBuffer: 32 * 1024 * 1024 })).stdout;
+  const run = async (args) => {
+    const resolved = nodeCli('opencli', args);
+    return (await execFileP(resolved.command, resolved.args, { maxBuffer: 32 * 1024 * 1024 })).stdout;
+  };
   const rows = [];
   const extractor = `(()=>({rows:[...document.querySelectorAll('[data-game_id]')].map((cell)=>{const text=(node)=>node?.textContent?.replace(/\\s+/g,' ').trim()||null;const title=cell.querySelector('.game_title a');const summary=cell.querySelector('.game_text');return {gameId:Number(cell.dataset.game_id)||null,url:title?.href||null,name:text(title),author:text(cell.querySelector('.game_author a')),price:text(cell.querySelector('.price_value')),summary:summary?.getAttribute('title')||text(summary),genre:text(cell.querySelector('.game_genre')),platform:text(cell.querySelector('.game_platform'))}}).filter((row)=>row.url&&row.name)}))()`;
   const close = async () => { try { await run(['browser', session, 'close']); } catch { /* 已关闭 */ } };
@@ -550,7 +554,10 @@ const SDB_EXTRACTOR = `(()=>{
 
 async function sourceSteamdb(o) {
   const url = `https://steamdb.info${o.sdbPath}`;
-  const run = async (args) => (await execFileP('opencli', args, { maxBuffer: 32 * 1024 * 1024 })).stdout;
+  const run = async (args) => {
+    const resolved = nodeCli('opencli', args);
+    return (await execFileP(resolved.command, resolved.args, { maxBuffer: 32 * 1024 * 1024 })).stdout;
+  };
   // `opencli doctor` 桥没连上也退出码 0，只是文案带 [FAIL]——单纯 catch 从来没生效过。
   // 真正判据在 requireBrowserBridge()：认 `[OK] Connectivity`，探测本身失败/超时就放行。
   requireBrowserBridge();

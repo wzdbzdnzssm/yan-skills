@@ -50,7 +50,13 @@
 import { writeFileSync, mkdirSync, readFileSync, realpathSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execFileSync } from "node:child_process";
+import { execFileSync as rawExecFileSync } from "node:child_process";
+import { nodeCli } from '../../backlink/scripts/lib-node-cli.mjs';
+
+function execFileSync(command, args, options) {
+  const resolved = nodeCli(command, args, options);
+  return rawExecFileSync(resolved.command, resolved.args, options);
+}
 import { newEvidenceDir, writeManifest } from "./lib-scene.mjs";
 
 const BASE = "https://seo.web.cafe";
@@ -374,7 +380,8 @@ let _opencliAvailable;
 function opencliAvailable() {
   if (_opencliAvailable !== undefined) return _opencliAvailable;
   try {
-    execFileSync("which", ["opencli"], { stdio: "ignore" });
+    if (process.platform === 'win32') nodeCli('opencli', []);
+    else execFileSync("which", ["opencli"], { stdio: "ignore" });
     _opencliAvailable = true;
   } catch {
     _opencliAvailable = false;

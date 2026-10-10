@@ -90,6 +90,7 @@ const decode = (s) => String(s)
 const xmlEscape = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function markdownSitemap(markdown) {
+  if (!/^Title:\s*Sitemap(?: Index)?\s*$/im.test(markdown) || /Warning:.*(?:[45]\d\d|error)/i.test(markdown)) return null;
   const lines = String(markdown).split(/\r?\n/);
   const rows = [];
   for (let i = 0; i < lines.length; i++) {
@@ -209,6 +210,7 @@ async function main() {
   if (args['self-test']) {
     const parsed = markdownSitemap('Title: Sitemap Index\n\n[https://example.com/games.xml](https://example.com/games.xml)\n\n2026-08-26');
     if (!parsed?.includes('<sitemapindex>') || !parsed.includes('<lastmod>2026-08-26</lastmod>')) die('Jina sitemap 解析检查失败');
+    if (markdownSitemap('Title: Not Found\n[home](https://example.com/)') !== null || markdownSitemap('Title: Sitemap\nWarning: Target URL returned error 404\n[home](https://example.com/)') !== null) die('Jina 错误页不能生成 sitemap baseline');
     console.log('sitemap-diff self-test passed');
     return;
   }
