@@ -121,6 +121,7 @@ metadata:
 
 - **触发**：「帮我搭起来」，或开发中把本 Skill 当规范挂着。
 - **入口**：[`lifecycle.md`](references/lifecycle.md) 段 3 + [`cloudflare-stack.md`](references/cloudflare-stack.md)（脚手架命令原文、资源选择、8.6 邮箱）；三方库/服务优先见 [`integrations.md`](references/integrations.md)。常用：`gh repo create --private`、`wrangler types`、对 dev server 跑 `scripts/seo-audit.mjs`。
+- **视频生成**：需要 Kie 接入、成本控制或样片验收时，读取 [`integrations/kie.md`](references/integrations/kie.md) 与 [复制包](templates/kie/README.md)，先完成零费用假服务流程，再按授权验证真实模型。
 
 | 硬规则 | 为什么 |
 |---|---|

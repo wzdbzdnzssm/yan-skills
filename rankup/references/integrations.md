@@ -38,6 +38,7 @@ npx skills add vercel-labs/skills --skill find-skills -g -y
 | Cloudflare 登录、资源查询、bindings、D1 migrations、R2、Worker Secrets、日志 tail、发布与回滚 | `wrangler` | 任何 Cloudflare 控制面或 CLI 操作 | `infrastructure.md`、`secrets.md` 元数据、`releases.md`、日志 |
 | Worker 代码、运行时 API、资源限制、性能、安全和代码审查 | `workers-best-practices` | 编写或审查 Worker、SSR 服务端和 bindings 使用方式 | `architecture.md`、`audit.md`、决策 |
 | 支付、订阅、Checkout、Billing、Webhook 或 Stripe 数据模型 | `stripe-best-practices` | 仅当支付或计费明确进入任务范围 | `integrations.md`、`secrets.md` 元数据、`releases.md` |
+| Kie 视频生成、模型字段、预算控制与样片验收 | [`integrations/kie.md`](integrations/kie.md) + [Worker 复制包](../templates/kie/README.md) | 产品明确需要图片参考视频或 Kie 异步任务时；先零费用本地验证 | `integrations.md`、`secrets.md` 元数据、成本与验收证据 |
 | PayPal Checkout / Subscriptions、与 Stripe 并存的对账 | 本文「PayPal 路由」+ [`monetization.md`](monetization.md) 二 | Stripe 主通道接通之后，作为关户备份 | `integrations.md`、`secrets.md` 元数据 |
 | 趋势方向、关键词热度、区域或时间变化证据 | 本 Skill 的 [`trends.md`](trends.md) 加 `scripts/gt.py` | 机会调研、内容选题和关键词复核 | `keywords.md`、`baseline.md`、实验 |
 | 外链盘点、质量评估、差距和风险 | `backlink`（`references/link-quality-rubric.md`） | 任何外链执行之前，以及周期性复查时 | `audit.md`、`baseline.md`、计划 |
