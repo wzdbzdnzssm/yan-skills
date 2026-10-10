@@ -10,7 +10,7 @@ import { resolveRoots } from "./registry.mjs";
 const execFileAsync = promisify(execFile);
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const expectedVersion = "3.24.0";
+const expectedVersion = "3.24.1";
 const requiredReferences = [
   "discipline.md",
   "monetization.md",
@@ -36,8 +36,8 @@ const requiredReferences = [
 const requiredContent = {
   "references/seo-webcafe.md": ["gefei-keywords", "gefei-competitor", "gefei-domain", "gefei-page", "knowledge_ask", "disable-model-invocation"],
   "SKILL.md": [
-    "npx skills add yan-labs/yan-skills --skill rankup -g -y",
-    "npx skills update rankup -g -y",
+    "--repo wzdbzdnzssm/yan-skills --ref feature/restore-game-opportunity --path rankup",
+    "manual-update-required",
     ".rankup/skill-state.json",
     "严禁在 Skill、`.rankup/`、Git、测试或回复中保存真实密钥",
     "## 可复用操作必须落成脚本",
@@ -126,7 +126,7 @@ const requiredContent = {
   "references/integrations.md": [
     "npx skills add stripe/ai --skill stripe-best-practices -g -y",
     "npx skills add vercel-labs/skills --skill find-skills -g -y",
-    "npx skills add yan-labs/yan-skills -g --all",
+    "--repo wzdbzdnzssm/yan-skills --ref feature/restore-game-opportunity --path rankup",
     "npx skills add yan-labs/yan-skills --skill backlink -g -y",
   ],
   "references/evolution.md": [

@@ -4,9 +4,13 @@
 
 作者 [Yan](https://github.com/yan-labs)，自用打磨，实测可跑。兼容 Claude Code、Codex CLI、Cursor，以及任何读 `SKILL.md` 的平台。MIT 协议，随便拿去用。
 
-```bash
-npx skills add yan-labs/yan-skills -g --all
+本 fork 的 rankup 使用 Codex `skill-installer` 精确安装：
+
+```text
+--repo wzdbzdnzssm/yan-skills --ref feature/restore-game-opportunity --path rankup
 ```
+
+安装和手动更新均只替换 rankup，保留其他已有 Skills；已有版本先安装到临时目录验证。
 
 ---
 
@@ -71,7 +75,7 @@ npx skills add yan-labs/yan-skills -g --all
 
 ## `rankup` — 网站全生命周期总控
 
-版本 `3.24.0`。Rankup 负责调研、建设、上线与增长决策；查关键词、竞品、域名、页面和哥飞经验时，按[哥飞工具箱指南](rankup/references/seo-webcafe.md)安装并加载官方 Skill 包，直接调用其工具。五个探索动作（词→词、词→问题、词→站、站→词、站→站）与市场证据闸门仍由 Rankup 执行。
+版本 `3.24.1`。本 fork 的 rankup 通过 Codex `skill-installer` 固定从 `wzdbzdnzssm/yan-skills` 的 `feature/restore-game-opportunity` 分支安装和手动更新（`--repo wzdbzdnzssm/yan-skills --ref feature/restore-game-opportunity --path rankup`），保留其他 Skills，版本检查不自动升级。Rankup 负责调研、建设、上线与增长决策；查关键词、竞品、域名、页面和哥飞经验时，按[哥飞工具箱指南](rankup/references/seo-webcafe.md)安装并加载官方 Skill 包，直接调用其工具。五个探索动作（词→词、词→问题、词→站、站→词、站→站）与市场证据闸门仍由 Rankup 执行。
 
 登录态数据平台可以直接走薄 CLI，把一次探路沉淀成可续跑清单：
 
@@ -438,6 +442,8 @@ npx skills add yan-labs/yan-skills --skill imagegen -g -y
 
 ## 安装
 
+rankup 的安装和后续更新固定经 Codex `skill-installer`，参数为 `--repo wzdbzdnzssm/yan-skills --ref feature/restore-game-opportunity --path rankup`。已有 rankup 时先安装到临时目录验证，再仅替换该目录；保留其他 Skills，不批量升级。`check-version.mjs` 只检查此 fork 分支，不自动安装或升级。
+
 **先装 `opencli`。** `rankup` 和 `backlink` 的浏览器动作全部落在它那一层——
 查数据面板、抓没有 API 的后台表格、提交外链、验证站长工具，都要经过它。
 不装它，那两个 Skill 里凡是碰浏览器的部分都跑不起来。
@@ -446,20 +452,8 @@ npx skills add yan-labs/yan-skills --skill imagegen -g -y
 # 0) 先装这个：其余 Skill 的浏览器动作都依赖它
 npx skills add yan-labs/yan-skills --skill opencli -g -y
 
-# 交互式选择要装哪些
-npx skills add yan-labs/yan-skills
-
-# 全局装齐全部
-npx skills add yan-labs/yan-skills -g --all
-
-# 只要 rankup
-npx skills add yan-labs/yan-skills --skill rankup -g -y
-
 # 只要 backlink
 npx skills add yan-labs/yan-skills --skill backlink -g -y
-
-# 更新
-npx skills update rankup -g -y
 ```
 
 Skill 只是给 Agent 的操作规范，**OpenCLI 本体（CLI + 浏览器扩展）要单独装一次**，

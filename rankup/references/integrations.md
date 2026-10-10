@@ -2,17 +2,15 @@
 
 Rankup 负责识别需求、选择专项能力和保持项目记录；专项 Skill 负责各自领域的操作细节。只安装当前任务需要的依赖，并在执行前确认用户授权范围。
 
+## Rankup 安装与更新
+
+本 fork 仅通过 Codex `skill-installer` 安装或手动更新 rankup，固定参数 `--repo wzdbzdnzssm/yan-skills --ref feature/restore-game-opportunity --path rankup`。已有版本先安装到临时目录验证，再仅替换 rankup，保留其他 Skills；不执行仓库全量安装或批量更新。版本脚本仅检查该分支，具体步骤见 [安装与版本](../SKILL.md#安装与版本)。
+
 ## 已验证的 Skills CLI 命令
 
 以下命令的 `add`、`update`、`--skill`、`-g`、`-y` 和 `--all` 语法已用当前 Skills CLI 帮助与仓库清单核对：
 
 ```bash
-# 安装或刷新 yan-skills 仓库中的全部 Skill
-npx skills add yan-labs/yan-skills -g --all
-
-# 更新全局安装的 rankup
-npx skills update rankup -g -y
-
 # 外链执行、外链分析，以及登录态后台批量取数（三者已合并为一个 Skill）
 npx skills add yan-labs/yan-skills --skill backlink -g -y
 

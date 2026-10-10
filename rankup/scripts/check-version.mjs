@@ -176,6 +176,14 @@ export async function loadOrCreateState(
   try {
     const state = await readJson(destination);
     let changed = false;
+    if (state.source !== manifest.source) {
+      state.source = manifest.source;
+      state.lastCheckedAt = null;
+      state.latestVersion = manifest.version;
+      state.lastOutcome = null;
+      state.lastReason = null;
+      changed = true;
+    }
     if (scope !== undefined && scope !== state.scope) {
       updateArgs(scope);
       state.scope = scope;
@@ -460,6 +468,16 @@ export async function checkForUpdate({
     return finish("update-available");
   }
 
+  if (manifest.updatePolicy === "manual") {
+    await finish("blocked", "manual-update-required");
+    return {
+      ...result("blocked", "manual-update-required"),
+      source: manifest.source,
+      manifestUrl: manifest.manifestUrl,
+      message: "请经 Codex skill-installer 从 wzdbzdnzssm/yan-skills 的 feature/restore-game-opportunity 分支手动安装或更新 rankup；保留其他 Skills。",
+    };
+  }
+
   if (await sourceCheckout(resolvedSkillDirectory)) {
     return finish("blocked", "source-checkout");
   }
@@ -558,7 +576,7 @@ async function main() {
       process.stdout.write(`${JSON.stringify(result)}\n`);
     } else {
       process.stdout.write(
-        `rankup: ${result.status} (${result.installedVersion} → ${result.latestVersion})\n`,
+        `rankup: ${result.status} (${result.installedVersion} → ${result.latestVersion})${result.message ? `\n${result.message}` : ""}\n`,
       );
     }
     process.exitCode = exitCodeFor(result.status);

@@ -560,3 +560,77 @@ test("project state refuses a symlinked .rankup directory", async () => {
     }
   });
 });
+
+const forkManifest = JSON.parse(
+  await readFile(new URL("../skill.json", import.meta.url), "utf8"),
+);
+
+test("fork manifest pins the personal repository, branch, and manual updates", () => {
+  assert.equal(forkManifest.source, "wzdbzdnzssm/yan-skills");
+  assert.equal(forkManifest.manifestUrl, "https://raw.githubusercontent.com/wzdbzdnzssm/yan-skills/feature/restore-game-opportunity/rankup/skill.json");
+  assert.equal(forkManifest.updatePolicy, "manual");
+});
+
+for (const apply of [false, true]) {
+  test(`manual fork check with apply=${apply} never executes an updater`, async () => {
+    await withTempProject(async (projectRoot) => {
+      let updateCalls = 0;
+      const result = await checkForUpdate({
+        projectRoot,
+        manifest: forkManifest,
+        apply,
+        fetchManifest: async (manifest) => {
+          assert.equal(manifest.manifestUrl, forkManifest.manifestUrl);
+          return { ...forkManifest, version: "3.24.2" };
+        },
+        runUpdate: async () => { updateCalls += 1; },
+      });
+      assert.equal(updateCalls, 0);
+      assert.equal(result.latestVersion, "3.24.2");
+      assert.equal(result.status, apply ? "blocked" : "update-available");
+      if (apply) {
+        assert.equal(result.reason, "manual-update-required");
+        assert.equal(result.source, forkManifest.source);
+        assert.equal(result.manifestUrl, forkManifest.manifestUrl);
+        assert.match(result.message, /feature\/restore-game-opportunity/);
+      }
+    });
+  });
+}
+
+test("manual fork check still accepts the current version", async () => {
+  await withTempProject(async (projectRoot) => {
+    const result = await checkForUpdate({
+      projectRoot,
+      manifest: forkManifest,
+      fetchManifest: async () => forkManifest,
+      runUpdate: async () => { assert.fail("manual check invoked updater"); },
+    });
+    assert.equal(result.status, "current");
+  });
+});
+
+test("existing project state reconciles the fork source without changing activation", async () => {
+  await withTempProject(async (projectRoot) => {
+    await checkForUpdate({projectRoot, manifest: localManifest, fetchManifest: async () => localManifest});
+    const statePath = path.join(projectRoot, ".rankup", "skill-state.json");
+    const before = JSON.parse(await readFile(statePath, "utf8"));
+    await writeFile(statePath, JSON.stringify({ ...before, latestVersion: "99.0.0", lastOutcome: "blocked", lastReason: "upstream-only" }));
+    let forkChecks = 0;
+    const result = await checkForUpdate({
+      projectRoot,
+      manifest: forkManifest,
+      fetchManifest: async (manifest) => {
+        assert.equal(manifest.manifestUrl, forkManifest.manifestUrl);
+        forkChecks += 1;
+        return forkManifest;
+      },
+    });
+    assert.equal(forkChecks, 1, "changing source must invalidate a fresh upstream cache");
+    assert.equal(result.status, "current");
+    assert.equal(result.latestVersion, forkManifest.version);
+    const after = JSON.parse(await readFile(statePath, "utf8"));
+    assert.equal(after.source, forkManifest.source);
+    assert.equal(after.installedAt, before.installedAt);
+  });
+});

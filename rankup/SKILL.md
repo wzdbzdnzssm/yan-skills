@@ -2,7 +2,7 @@
 name: rankup
 description: 管理网站和原生 App 的需求验证、立项、开发、上线及增长。用户明确提到 rankup，或任务涉及选词、SERP、SEO/GEO、索引、搜索平台、流量、网站体检、建站和增长时使用。先定位项目与具体问题，再按七段生命周期加载对应参考文件；单纯写文案、做设计或问通用开发问题，不因关键词碰巧出现就强制启动完整流程。
 metadata:
-  version: "3.24.0"
+  version: "3.24.1"
 ---
 
 # Rankup 3.0
@@ -285,7 +285,7 @@ G 组那条线：`scripts/review.mjs --project-root .` 出五块报告；再挖�
 
 ## 启动协议
 
-1. 读同目录 `skill.json`，跑 `node "<rankup-skill-dir>/scripts/check-version.mjs" --project-root . --apply`；网络失败保留当前版本，不得伪称已更新。
+1. 读同目录 `skill.json`，跑 `node "<rankup-skill-dir>/scripts/check-version.mjs" --project-root .`；仅检查版本，不自动升级。网络失败保留当前版本，不得伪称已更新。
 2. 读 `.rankup/INDEX.md` 与 `.rankup/skill-state.json`；不存在按 [`project-memory.md`](references/project-memory.md) 初始化，不重建技术栈。只读任务相关文件，不无差别加载日志目录。**本轮要碰的每个词、方向、功能、渠道、域名先 `grep -i` 一遍 `.rankup/rejected.md`**，命中的只有跳过并引用、或写明复活条件已满足两种处置。
 3. **三方对账门禁**：回答「接下来做什么」或宣称任何进度之前，交叉核对 `git log --oneline -25`、真实路由清单、线上 `sitemap.xml` 全量 `<loc>`。`plan.md` 的勾选、`progress.md`、autopilot 状态都是滞后指标；外部状态（Cloudflare、GSC、Stripe、索引、外链）以当前查询为准。不一致先回写 `.rankup/` 再继续。
 4. 读 [`references/checklists.md`](references/checklists.md) 与 `.rankup/checks.md` 定段，不凭印象；需要可复用操作先查跨项目登记表。
@@ -322,13 +322,15 @@ G 组那条线：`scripts/review.mjs --project-root .` 出五块报告；再挖�
 
 先装 `opencli`（`npx skills add yan-labs/yan-skills --skill opencli -g -y`）：OpenCLI 本体要装我们自己的构建，不是应用商店版（商店版默认前台抢标签页，失败不报错）。`opencli doctor` 报扩展版本过低时照它说的做。**凡是碰用户已登录浏览器的动作，一律走它，不得用其他浏览器自动化工具（含 Claude 自带的 Claude in Chrome 一类）替代**——理由与判据见 [`discipline.md`](references/discipline.md) 五。
 
-```bash
-npx skills add yan-labs/yan-skills --skill rankup -g -y   # 全局安装
-npx skills update rankup -g -y                            # 全局更新
-npx skills update rankup -p -y                            # 项目级更新
+本 fork 的 rankup 固定从 `wzdbzdnzssm/yan-skills` 的 `feature/restore-game-opportunity` 分支安装与更新。使用 Codex `skill-installer` 的安装脚本，参数固定为：
+
+```text
+--repo wzdbzdnzssm/yan-skills --ref feature/restore-game-opportunity --path rankup
 ```
 
-发布版本记录在 `skill.json`；项目的启用时间、已安装版本和最近检查状态记录在 `.rankup/skill-state.json`。`check-version.mjs` 最多每 24 小时访问一次远端，只更新本 Skill，不碰业务代码与 `.rankup/`；遇到源码检出（仓库根有 `.skill-source`）或工作区有未提交修改时拒绝更新并报告原因，链接被换成实体目录时在仓库里跑 `node scripts/link-skills.mjs` 恢复。
+只安装完整 `rankup/` 到 Codex 全局 Skills 目录，保留其他已有 Skills。已有 rankup 时，先安装到临时目录并验证，再仅替换 rankup；不覆盖整个 Skills 目录，不运行批量更新。
+
+发布版本记录在 `skill.json`；项目的启用时间、已安装版本和最近检查状态记录在 `.rankup/skill-state.json`。`check-version.mjs` 最多每 24 小时检查此 fork 分支，不自动升级。`updatePolicy: manual` 下即使传入 `--apply`，有新版时也只返回 `manual-update-required` 和上述手动更新来源，不调用旧 Skills CLI。安装和更新须有当前任务授权；网络失败保留现有版本。
 版本号：patch 文字与小经验；minor 向后兼容的新工作流；major 目录协议或核心行为破坏性变化。发版同时更新 `metadata.version`、`skill.json`、验证脚本预期和 README。
 
 **经验回流**（用户说「把这个经验写进 rankup」「记下来更新到源码里」）：先按 [`experiences/INDEX.md`](references/experiences/INDEX.md) 收录规则定证据等级与归属层，再按 [`evolution.md`](references/evolution.md) 晋升门判它进 Skill 还是留项目侧；进 Skill 的写进**对应的现有文件**（选词进 `webcafe-topics.md` 一、外链进五、变现进 `monetization.md`……），不新建文件、不带站名与数字；改完跑 `node scripts/validate-rankup.mjs`，直接提 main。**面板与网页操作口径的修正**（Semrush、Similarweb、seo.web.cafe、哥飞论坛、站长工具、任何 OpenCLI 驱动的站）另有一道门：每轮跑完把「对不上」的地方按 [`discipline.md`](references/discipline.md) 十五分诊，五层全过才改原文档并同步 JSON 与脚本的已验证日期；没过的留在项目 `journal/`，一次环境故障写成「功能没了」比不回流更糟。
