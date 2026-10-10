@@ -639,7 +639,8 @@ async function checkUrl(url) {
 
 /**
  * 只汇总关键词行的原始事实，不选边、不打分：
- * 每一行区分「实测」与「未查询」；聚合值只来自实测行，未查询行单独计数。
+ * 每一行区分有效实测与无有效指标；聚合值只来自实测行，无有效指标行单独计数。
+ * notQueriedRows 保留历史 JSON 字段名，包含未查询、查询失败和指标不可用。
  * KD 不取最小值（挑较低数字下结论是被点名的病灶），全量列出交给 AI 读。
  */
 function keywordFacts(c) {
@@ -710,7 +711,7 @@ function overlayCandidates(current, overlay) {
 
 const md = (v) => String(v ?? '').replace(/([|[\]])/g, '\\$1').replace(/\n/g, ' ');
 const link = (label, url) => validUrl(url) ? `[${md(label)}](${url})` : md(label);
-// 只排版事实：实测值带市场标注，未查询行单独计数；不做「待查/达标」之类的定性。
+// 只排版事实：实测值带市场标注，无有效指标行单独计数；不做「待查/达标」之类的定性。
 const metric = (c) => {
   const k = c.keywordMetrics ?? keywordFacts(c);
   const rows = arr(c.keywords).filter((row) => measuredStatus(row) && numericMetric(row.semrushVolume ?? row.volume ?? row.localVolume))
@@ -724,7 +725,7 @@ const metric = (c) => {
   if (top) parts.push(`最高 ${String(top.row.market ?? top.row.gl).toUpperCase()} ${top.volume.toLocaleString('en-US')}`);
   if (discoveryTop && discoveryTop.row !== top?.row) parts.push(`发现市场 ${String(discoveryTop.row.market ?? discoveryTop.row.gl).toUpperCase()} ${discoveryTop.volume.toLocaleString('en-US')}`);
   if (k.kdValues.length) parts.push(`KD ${k.kdValues.join('/')}`);
-  if (k.notQueriedRows > 0) parts.push(`未查询 ${k.notQueriedRows} 行`);
+  if (k.notQueriedRows > 0) parts.push(`无有效指标 ${k.notQueriedRows} 行`);
   if (c.keywordStrategy?.entityType) parts.push(`类型 ${c.keywordStrategy.entityType}`);
   if (c.trend?.direction) parts.push(`近 7 天 ${c.trend.direction}`);
   if (c.promotionRisk?.internalTrafficRisk) parts.push(`站内流量风险 ${c.promotionRisk.internalTrafficRisk}`);
@@ -1520,7 +1521,10 @@ function selfTest() {
     saveReport(o, [testReport], []);
     const falseGreen = inspectDecision(o);
     if (falseGreen.checks.some((check) => ['D04', 'D05', 'D06', 'D07'].includes(check.id) && check.passed)) throw new Error('空取数/未测趋势/无量误报再次通过验收');
-    if (metric({ keywords: [{ status: 'metrics_unavailable', semrushVolume: null, semrushGlobalVolume: null, globalVolume: null }] }).includes('全球 0')) throw new Error('null 被排版成实测零');
+    for (const status of ['metrics_unavailable', 'absent', 'failed']) {
+      const unavailableMetric = metric({ keywords: [{ status, semrushVolume: null, semrushGlobalVolume: null, globalVolume: null }] });
+      if (!unavailableMetric.includes('无有效指标 1 行') || /未查询|全球 0/.test(unavailableMetric)) throw new Error('已查询但无有效指标不能排版为未查询或实测零');
+    }
     const rawZero = { keyword: 'foo', db: 'us', status: 'ok', volume: 0, globalVolume: 0, byCountry: {} };
     writeText(f.globalSemrush, JSON.stringify(rawZero)); writeText(f.countrySemrush, JSON.stringify(rawZero));
     writeJson(f.demandResults, demandOverlay(o, testPlan, [rawZero], [rawZero]));
