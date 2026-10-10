@@ -75,7 +75,7 @@
 
 ## `rankup` — 网站全生命周期总控
 
-版本 `3.24.1`。本 fork 的 rankup 通过 Codex `skill-installer` 固定从 `wzdbzdnzssm/yan-skills` 的 `feature/restore-game-opportunity` 分支安装和手动更新（`--repo wzdbzdnzssm/yan-skills --ref feature/restore-game-opportunity --path rankup`），保留其他 Skills，版本检查不自动升级。Rankup 负责调研、建设、上线与增长决策；查关键词、竞品、域名、页面和哥飞经验时，按[哥飞工具箱指南](rankup/references/seo-webcafe.md)安装并加载官方 Skill 包，直接调用其工具。五个探索动作（词→词、词→问题、词→站、站→词、站→站）与市场证据闸门仍由 Rankup 执行。
+版本 `3.24.2`。本 fork 的 rankup 通过 Codex `skill-installer` 固定从 `wzdbzdnzssm/yan-skills` 的 `feature/restore-game-opportunity` 分支安装和手动更新（`--repo wzdbzdnzssm/yan-skills --ref feature/restore-game-opportunity --path rankup`），保留其他 Skills，版本检查不自动升级。Rankup 负责调研、建设、上线与增长决策；查关键词、竞品、域名、页面和哥飞经验时，按[哥飞工具箱指南](rankup/references/seo-webcafe.md)安装并加载官方 Skill 包，直接调用其工具。五个探索动作（词→词、词→问题、词→站、站→词、站→站）与市场证据闸门仍由 Rankup 执行。
 
 登录态数据平台可以直接走薄 CLI，把一次探路沉淀成可续跑清单：
 

@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "name": "rankup",
-  "version": "3.24.1",
-  "releasedAt": "2026-10-10T08:55:54Z",
+  "version": "3.24.2",
+  "releasedAt": "2026-10-10T09:09:59Z",
   "source": "wzdbzdnzssm/yan-skills",
   "manifestUrl": "https://raw.githubusercontent.com/wzdbzdnzssm/yan-skills/feature/restore-game-opportunity/rankup/skill.json",
   "updatePolicy": "manual"

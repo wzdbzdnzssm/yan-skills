@@ -564,6 +564,7 @@ test("project state refuses a symlinked .rankup directory", async () => {
 const forkManifest = JSON.parse(
   await readFile(new URL("../skill.json", import.meta.url), "utf8"),
 );
+const nextForkVersion = forkManifest.version.replace(/\d+$/, (patch) => Number(patch) + 1);
 
 test("fork manifest pins the personal repository, branch, and manual updates", () => {
   assert.equal(forkManifest.source, "wzdbzdnzssm/yan-skills");
@@ -581,12 +582,12 @@ for (const apply of [false, true]) {
         apply,
         fetchManifest: async (manifest) => {
           assert.equal(manifest.manifestUrl, forkManifest.manifestUrl);
-          return { ...forkManifest, version: "3.24.2" };
+          return { ...forkManifest, version: nextForkVersion };
         },
         runUpdate: async () => { updateCalls += 1; },
       });
       assert.equal(updateCalls, 0);
-      assert.equal(result.latestVersion, "3.24.2");
+      assert.equal(result.latestVersion, nextForkVersion);
       assert.equal(result.status, apply ? "blocked" : "update-available");
       if (apply) {
         assert.equal(result.reason, "manual-update-required");
@@ -597,6 +598,19 @@ for (const apply of [false, true]) {
     });
   });
 }
+
+test("previous fork release detects the patched release without running an updater", async () => {
+  await withTempProject(async (projectRoot) => {
+    const result = await checkForUpdate({
+      projectRoot,
+      manifest: { ...forkManifest, version: "3.24.1" },
+      fetchManifest: async () => forkManifest,
+      runUpdate: async () => { assert.fail("manual check invoked updater"); },
+    });
+    assert.equal(result.status, "update-available");
+    assert.equal(result.latestVersion, forkManifest.version);
+  });
+});
 
 test("manual fork check still accepts the current version", async () => {
   await withTempProject(async (projectRoot) => {

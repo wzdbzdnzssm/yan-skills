@@ -10,7 +10,7 @@ import { resolveRoots } from "./registry.mjs";
 const execFileAsync = promisify(execFile);
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const expectedVersion = "3.24.1";
+const expectedVersion = "3.24.2";
 const requiredReferences = [
   "discipline.md",
   "monetization.md",
@@ -350,7 +350,10 @@ async function validate() {
       }
     }
     if (relativePath === "references/checklists.md") {
-      const prose = text.replace(/^```[^\n]*\n[\s\S]*?^```[^\n]*$/gm, "");
+      const prose = text.replace(/\r\n?/g, "\n").replace(/^```[^\n]*\n[\s\S]*?^```[^\n]*$/gm, "");
+      const tableRows = (markdown) => [...markdown.matchAll(/(?:^\|[^\n]*\|(?:\n|$))+/gm)]
+        .filter(([table]) => /^\|(?:\s*:?-+:?\s*\|)+\s*$/m.test(table))
+        .flatMap(([table]) => table.trimEnd().split("\n"));
       for (const [stage, label, bold = true] of [
         [3, "D15 · 品牌图标当天做齐"],
         [4, "图标专项（上线前必过）"],
@@ -365,7 +368,8 @@ async function validate() {
       ]) {
         const row = `| ${bold ? `**${label}**` : label} |`;
         const section = prose.split(new RegExp(`^## 段 ${stage} ·`, "m"))[1]?.split(/^## /m)[0] ?? "";
-        if (text.split(row).length !== 2 || !section.includes(`|\n${row}`)) {
+        const rows = prose.split("\n").filter((line) => line.startsWith(row));
+        if (rows.length !== 1 || !tableRows(section).some((line) => line.startsWith(row))) {
           errors.push(`checklist gate must occur once as a table row in stage ${stage}: ${label}`);
         }
       }
@@ -393,7 +397,7 @@ async function validate() {
   const dynamicLeakPatterns = await buildDynamicProjectLeakPatterns();
   const allLeakPatterns = [...projectLeakPatterns, ...dynamicLeakPatterns];
   for (const { file, text } of contents) {
-    const relativePath = path.relative(skillRoot, file);
+    const relativePath = path.relative(skillRoot, file).split(path.sep).join("/");
     for (const [label, pattern] of secretPatterns) {
       pattern.lastIndex = 0;
       if (pattern.test(text)) {

@@ -237,6 +237,42 @@ test("release validator keeps release checks in their owning stage", async () =>
   });
 });
 
+test("release validator accepts checklist tables with LF and CRLF", async () => {
+  await withSkillCopy(async (skillRoot) => {
+    const target = path.join(skillRoot, "references", "checklists.md");
+    const original = (await readFile(target, "utf8")).replace(/\r\n?/g, "\n");
+    for (const newline of ["\n", "\r\n"]) {
+      await writeFile(target, original.replaceAll("\n", newline));
+      const result = validate(skillRoot);
+      assert.equal(result.status, 0, result.stderr);
+    }
+  });
+});
+
+test("release validator rejects missing, duplicate and fenced checklist gates", async () => {
+  await withSkillCopy(async (skillRoot) => {
+    const target = path.join(skillRoot, "references", "checklists.md");
+    const original = (await readFile(target, "utf8")).replace(/\r\n?/g, "\n");
+    const row = original.split("\n").find((line) => line.startsWith("| **D15 · 品牌图标当天做齐** |"));
+    assert.ok(row);
+    for (const content of [
+      original.replace(row, ""),
+      original.replace(row, `${row}\n${row}`),
+      original.replace(row, `\`\`\`markdown\n${row}\n\`\`\``),
+      original.replace(row, `\n${row}\n`),
+    ]) {
+      await writeFile(target, content);
+      const result = validate(skillRoot);
+      assert.equal(result.status, 1, result.stderr);
+      assert.match(result.stderr, /checklist gate must occur once as a table row in stage 3: D15/);
+    }
+    // An example row in a fenced block cannot turn a valid operative row into a duplicate.
+    await writeFile(target, `${original}\n\`\`\`markdown\n${row}\n\`\`\`\n`);
+    const result = validate(skillRoot);
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("release validator rejects removal of substantive release criteria", async () => {
   await withSkillCopy(async (skillRoot) => {
     const target = path.join(skillRoot, "references", "checklists.md");
